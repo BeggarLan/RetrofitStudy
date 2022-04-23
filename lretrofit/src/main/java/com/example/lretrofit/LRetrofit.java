@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import okhttp3.HttpUrl;
+
 /**
  * author: BeggarLan
  * created on: 2022/4/22 22:12
@@ -13,6 +15,16 @@ import java.lang.reflect.Proxy;
  */
 public class LRetrofit {
 
+    @NonNull
+    final HttpUrl mBaseUrl;
+
+    public LRetrofit(@NonNull HttpUrl mBaseUrl) {
+        this.mBaseUrl = mBaseUrl;
+    }
+
+    /**
+     * 创建service的代理对象
+     */
     public <T> T create(@NonNull Class<T> service) {
         validService(service);
         return (T) Proxy.newProxyInstance(
@@ -29,6 +41,9 @@ public class LRetrofit {
                 });
     }
 
+    /**
+     * service合法性检查
+     */
     private void validService(@NonNull Class<?> service) {
         if (!service.isInterface()) {
             throw new IllegalArgumentException("server must be interface");

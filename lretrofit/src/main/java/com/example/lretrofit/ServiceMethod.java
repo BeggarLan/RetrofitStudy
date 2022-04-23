@@ -12,7 +12,7 @@ import java.lang.reflect.Type;
  */
 public class ServiceMethod {
 
-    static ServiceMethod parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method metho    d) {
+    static ServiceMethod parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method method) {
 
         // 返回类型
         Type returnType = method.getGenericReturnType();

@@ -14,6 +14,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import okhttp3.HttpUrl;
+
 /**
  * author: BeggarLan
  * created on: 2022/4/23 21:53
@@ -29,8 +31,10 @@ public class RequestFactory {
     @Nullable
     @HttpMethod
     private String mHttpMethod;
+    @NonNull
+    private HttpUrl mBaseUrl;
     // 相对地址(不包括baseUrl的部分)
-    @Nullable
+    @NonNull
     private String mRelativeUrl;
 
     // 是否有请求体
@@ -43,8 +47,9 @@ public class RequestFactory {
 
     RequestFactory(@NonNull Builder builder) {
         this.mMethod = builder.mMethod;
+
+        mBaseUrl = builder.mRetrofit.mBaseUrl;
         mHttpMethod = builder.mHttpMethod;
-        // TODO: 2022/4/23 baseUrl
         mRelativeUrl = builder.mRelativeUrl;
         mHasBody = builder.mHasBody;
         isFormEncode = builder.isFormEncode;
@@ -67,11 +72,9 @@ public class RequestFactory {
         private Annotation[][] mParameterAnnotations;
 
         // 区分请求类型的(get、post等)
-        @Nullable
         @HttpMethod
         private String mHttpMethod;
         // 相对地址(不包括baseUrl的部分)
-        @Nullable
         private String mRelativeUrl;
 
         // 是否有请求体
@@ -103,7 +106,7 @@ public class RequestFactory {
             int parameterCount = mParameterAnnotations.length;
             // TODO: 2022/4/23 参数处理
 
-            if (TextUtils.isEmpty(mRelativeUrl)) {
+            if (mRelativeUrl == null) {
                 throw new IllegalArgumentException("class:" + mMethod.getDeclaringClass().getName() + ", method:" + mMethod + " ,url is required");
             }
 
