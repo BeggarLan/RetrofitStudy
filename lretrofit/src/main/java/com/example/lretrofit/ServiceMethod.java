@@ -16,7 +16,7 @@ public class ServiceMethod {
 
         // 返回类型
         Type returnType = method.getGenericReturnType();
-        if(Utils.haUnresolvableType(returnType)) {
+        if(Utils.hasUnresolvableType(returnType)) {
             throw new IllegalArgumentException("class:"+method.getDeclaringClass().getName()+", method:" + method+ " ,returnType error: " +returnType);
         }
         if(returnType == Void.TYPE) {

@@ -1,10 +1,8 @@
 package com.example.lretrofit;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -23,7 +21,7 @@ public class Utils {
      * 1. T
      * 2. <?> <? extends XX> <? super XX>
      */
-    static boolean haUnresolvableType(@Nullable Type type) {
+    static boolean hasUnresolvableType(@Nullable Type type) {
         if (type instanceof Class) {
             return false;
         }
@@ -31,7 +29,7 @@ public class Utils {
         if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
             for (Type arguType : parameterizedType.getActualTypeArguments()) {
-                if (haUnresolvableType(arguType)) {
+                if (hasUnresolvableType(arguType)) {
                     return true;
                 }
             }
@@ -39,7 +37,7 @@ public class Utils {
         }
         // T[]
         if (type instanceof GenericArrayType) {
-            return haUnresolvableType(((GenericArrayType) type).getGenericComponentType());
+            return hasUnresolvableType(((GenericArrayType) type).getGenericComponentType());
         }
         // T
         if (type instanceof TypeVariable) {
