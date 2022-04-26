@@ -2,6 +2,7 @@ package com.example.lretrofit;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import android.text.TextUtils;
@@ -41,6 +42,9 @@ public class RequestFactory {
   private boolean mHasBody;
   private boolean isFormEncode;
 
+  // 参数处理器
+  private ParameterHandler<?>[] mParameterHandlers;
+
   static RequestFactory parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method method) {
     return new Builder(retrofit, method).build();
   }
@@ -53,6 +57,7 @@ public class RequestFactory {
     mRelativeUrl = builder.mRelativeUrl;
     mHasBody = builder.mHasBody;
     isFormEncode = builder.mIsFormEncoded;
+    mParameterHandlers = builder.mParameterHandlers;
   }
 
 
@@ -195,7 +200,26 @@ public class RequestFactory {
         boolean encoded = field.encoded();
 
         mHasField = true;
+        Class<?> rawParameterType = Utils.getRawType(parameterType);
+        if (Iterable.class.isAssignableFrom(rawParameterType)) {
+          // 必须有具体的类型
+          if (!(parameterType instanceof ParameterizedType)) {
+            throw new IllegalArgumentException(
+                "class:" + mMethod.getDeclaringClass().getName() + ", method:" + mMethod +
+                    parameterType + " must has generic type (e.g.," +
+                    rawParameterType.getSimpleName() + "<String>)");
+          }
+          ParameterizedType parameterizedType = (ParameterizedType) parameterType;
+
+        } else if (rawParameterType.isArray()) {
+
+        } else {
+
+        }
+
         // TODO: 2022/4/24 继续
+        // 该参数没有被retrofit的annotation注解时
+        return null;
       }
 
       return null;

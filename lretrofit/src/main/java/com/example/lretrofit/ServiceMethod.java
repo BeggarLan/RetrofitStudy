@@ -1,28 +1,32 @@
 package com.example.lretrofit;
 
-import androidx.annotation.NonNull;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+
+import androidx.annotation.NonNull;
 
 /**
  * author: BeggarLan
  * created on: 2022/4/22 22:27
- * description:
+ * description: 将接口的method转化为实际请求的method
  */
 public class ServiceMethod {
 
-    static ServiceMethod parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method method) {
-
-        // 返回类型
-        Type returnType = method.getGenericReturnType();
-        if(Utils.hasUnresolvableType(returnType)) {
-            throw new IllegalArgumentException("class:"+method.getDeclaringClass().getName()+", method:" + method+ " ,returnType error: " +returnType);
-        }
-        if(returnType == Void.TYPE) {
-            throw new IllegalArgumentException("class:"+method.getDeclaringClass().getName()+", method:" + method+ " cannot return void");
-        }
-        return
+  static ServiceMethod parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method method) {
+    RequestFactory requestFactory = RequestFactory.parseAnnotations(retrofit, method);
+    // 返回类型
+    Type returnType = method.getGenericReturnType();
+    if (Utils.hasUnresolvableType(returnType)) {
+      throw new IllegalArgumentException(
+          "class:" + method.getDeclaringClass().getName() + ", method:" + method +
+              " ,returnType error: " + returnType);
     }
+    if (returnType == Void.TYPE) {
+      throw new IllegalArgumentException(
+          "class:" + method.getDeclaringClass().getName() + ", method:" + method +
+              " cannot return void");
+    }
+    return
+  }
 
 }
