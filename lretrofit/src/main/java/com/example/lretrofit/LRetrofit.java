@@ -1,10 +1,16 @@
 package com.example.lretrofit;
 
-import androidx.annotation.NonNull;
+import static com.example.lretrofit.Utils.checkNotNull;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import okhttp3.HttpUrl;
 
@@ -15,44 +21,59 @@ import okhttp3.HttpUrl;
  */
 public class LRetrofit {
 
-    @NonNull
-    final HttpUrl mBaseUrl;
+  @NonNull final HttpUrl mBaseUrl;
 
-    public LRetrofit(@NonNull HttpUrl mBaseUrl) {
-        this.mBaseUrl = mBaseUrl;
+  @NonNull final List<Converter.Factory> mConverterFactories;
+
+  public LRetrofit(@NonNull HttpUrl mBaseUrl) {
+    this.mBaseUrl = mBaseUrl;
+  }
+
+  /**
+   * 创建service的代理对象
+   */
+  public <T> T create(@NonNull Class<T> service) {
+    validService(service);
+    return (T) Proxy.newProxyInstance(
+        service.getClassLoader(),
+        new Class<?>[]{service},
+        new InvocationHandler() {
+          @Override
+          public Object invoke(Object o, Method method, Object[] args) throws Throwable {
+            if (method.getDeclaringClass() == Object.class) {
+              return method.invoke(this, args);
+            }
+            return loadServiceMethod(method);
+          }
+        });
+  }
+
+  /**
+   * service合法性检查
+   */
+  private void validService(@NonNull Class<?> service) {
+    if (!service.isInterface()) {
+      throw new IllegalArgumentException("server must be interface");
     }
+  }
 
-    /**
-     * 创建service的代理对象
-     */
-    public <T> T create(@NonNull Class<T> service) {
-        validService(service);
-        return (T) Proxy.newProxyInstance(
-                service.getClassLoader(),
-                new Class<?>[]{service},
-                new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object o, Method method, Object[] args) throws Throwable {
-                        if(method.getDeclaringClass() == Object.class) {
-                            return method.invoke(this, args);
-                        }
-                        return loadServiceMethod(method);
-                    }
-                });
+  private Object loadServiceMethod(@NonNull Method method) {
+
+    return null;
+  }
+
+  public Converter<?, String> stringConverter(
+      @Nullable Type type, @Nullable Annotation[] annotations) {
+    checkNotNull(type, "type == null");
+    checkNotNull(annotations, "annotations == null");
+
+    for (Converter.Factory factory : mConverterFactories) {
+      Converter<?, String> stringConverter = factory.stringConverter(type, annotations, this);
+      if (stringConverter != null) {
+        return stringConverter;
+      }
     }
-
-    /**
-     * service合法性检查
-     */
-    private void validService(@NonNull Class<?> service) {
-        if (!service.isInterface()) {
-            throw new IllegalArgumentException("server must be interface");
-        }
-    }
-
-    private Object loadServiceMethod(@NonNull Method method) {
-
-        return null;
-    }
-
+    // TODO: 2022/4/27 default
+    return null;
+  }
 }

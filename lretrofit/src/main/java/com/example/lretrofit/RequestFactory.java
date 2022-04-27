@@ -210,7 +210,10 @@ public class RequestFactory {
                     rawParameterType.getSimpleName() + "<String>)");
           }
           ParameterizedType parameterizedType = (ParameterizedType) parameterType;
-
+          // 拿到element的类型
+          Type elementType = Utils.getParameterUpperBound(0, parameterizedType);
+          Converter<?, String> converter = mRetrofit.stringConverter(elementType, annotations);
+          return new ParameterHandler<Object>() {}
         } else if (rawParameterType.isArray()) {
 
         } else {

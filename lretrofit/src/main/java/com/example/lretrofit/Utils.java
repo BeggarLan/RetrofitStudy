@@ -112,4 +112,10 @@ public class Utils {
     return resultType;
   }
 
+  static void checkNotNull(@Nullable Object object, String msg) {
+    if (object == null) {
+      throw new NullPointerException(msg);
+    }
+  }
+
 }
