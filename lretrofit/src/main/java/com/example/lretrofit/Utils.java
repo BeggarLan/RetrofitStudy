@@ -118,4 +118,19 @@ public class Utils {
     }
   }
 
+  /**
+   * 几本类型装箱
+   */
+  static Class<?> boxIfPrimitive(Class<?> type) {
+    if (boolean.class == type) return Boolean.class;
+    if (byte.class == type) return Byte.class;
+    if (char.class == type) return Character.class;
+    if (double.class == type) return Double.class;
+    if (float.class == type) return Float.class;
+    if (int.class == type) return Integer.class;
+    if (long.class == type) return Long.class;
+    if (short.class == type) return Short.class;
+    return type;
+  }
+
 }

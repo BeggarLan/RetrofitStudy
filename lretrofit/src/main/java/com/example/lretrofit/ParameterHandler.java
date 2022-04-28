@@ -1,5 +1,7 @@
 package com.example.lretrofit;
 
+import java.lang.reflect.Array;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,6 +14,9 @@ public abstract class ParameterHandler<T> {
 
   abstract void apply(RequestBuilder requestBuilder, @Nullable T value);
 
+  /**
+   * 处理iterable
+   */
   ParameterHandler<Iterable<T>> iterable() {
     return new ParameterHandler<Iterable<T>>() {
       @Override
@@ -21,6 +26,23 @@ public abstract class ParameterHandler<T> {
         }
         for (T value : values) {
           ParameterHandler.this.apply(requestBuilder, value);
+        }
+      }
+    };
+  }
+
+  /**
+   * 处理array
+   */
+  ParameterHandler<?> array() {
+    return new ParameterHandler<Object>() {
+      @Override
+      void apply(RequestBuilder requestBuilder, @Nullable Object values) {
+        if (values == null) {
+          return;
+        }
+        for (int i = 0, size = Array.getLength(values); i < size; ++i) {
+          ParameterHandler.this.apply(requestBuilder, (T) Array.get(values, i));
         }
       }
     };

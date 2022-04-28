@@ -216,16 +216,18 @@ public class RequestFactory {
           Converter<?, String> converter = mRetrofit.stringConverter(elementType, annotations);
           return new ParameterHandler.Field<>(name, converter, encoded).iterable();
         } else if (rawParameterType.isArray()) {
-
+          // rawParameterType已经丢失内部的子类型了，为啥不用parameterType原类型呢？？？
+          Class<?> arrayComponentType = Utils.boxIfPrimitive(rawParameterType.getComponentType());
+          Converter<?, String> converter =
+              mRetrofit.stringConverter(arrayComponentType, annotations);
+          return new ParameterHandler.Field<>(name, converter, encoded).array();
         } else {
-
+          Converter<?, String> converter = mRetrofit.stringConverter(parameterType, annotations);
+          return new ParameterHandler.Field<>(name, converter, encoded);
         }
-
-        // TODO: 2022/4/24 继续
-        // 该参数没有被retrofit的annotation注解时
-        return null;
       }
 
+      // 该参数没有被retrofit的annotation注解时
       return null;
     }
 
