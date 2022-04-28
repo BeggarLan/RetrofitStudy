@@ -84,6 +84,7 @@ public class RequestFactory {
 
     // 是否有请求体
     private boolean mHasBody;
+
     private boolean mIsFormEncoded;
 
     // 是否有field参数(@Field)
@@ -213,7 +214,7 @@ public class RequestFactory {
           // 拿到element的类型
           Type elementType = Utils.getParameterUpperBound(0, parameterizedType);
           Converter<?, String> converter = mRetrofit.stringConverter(elementType, annotations);
-          return new ParameterHandler<Object>() {}
+          return new ParameterHandler.Field<>(name, converter, encoded).iterable();
         } else if (rawParameterType.isArray()) {
 
         } else {

@@ -16,7 +16,7 @@ import androidx.annotation.Nullable;
 public interface Converter<T, R> {
 
   @Nullable
-  R convert(R value);
+  R convert(T value);
 
   abstract class Factory {
 

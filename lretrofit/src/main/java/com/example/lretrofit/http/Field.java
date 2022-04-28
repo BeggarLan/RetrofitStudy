@@ -16,6 +16,7 @@ public @interface Field {
 
   String value();
 
+  // 是否已经编码过
   boolean encoded() default false;
 
 }
