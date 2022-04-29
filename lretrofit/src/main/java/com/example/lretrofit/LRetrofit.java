@@ -24,6 +24,7 @@ public class LRetrofit {
   @NonNull final HttpUrl mBaseUrl;
 
   @NonNull final List<Converter.Factory> mConverterFactories;
+  @NonNull final List<CallAdapter.Factory> mCallAdapterFactories;
 
   public LRetrofit(@NonNull HttpUrl mBaseUrl) {
     this.mBaseUrl = mBaseUrl;
@@ -76,4 +77,30 @@ public class LRetrofit {
     // TODO: 2022/4/27 default
     return null;
   }
+
+  /**
+   * 根据返回类型找到合适的adapter
+   */
+  CallAdapter<?, ?> callAdapter(
+      @NonNull Type returnType, @Nullable Annotation[] annotations) {
+    Utils.checkNotNull(returnType, "returnType == null");
+    Utils.checkNotNull(annotations, "annotations == null");
+    for (int i = 0, size = mCallAdapterFactories.size(); i < size; ++i) {
+      CallAdapter<?, ?> callAdapter =
+          mCallAdapterFactories.get(i).get(this, returnType, annotations);
+      if (callAdapter != null) {
+        return callAdapter;
+      }
+    }
+
+    StringBuilder stringBuilder = new StringBuilder("could not find callAdapter for ")
+        .append(returnType)
+        .append(".\n");
+    stringBuilder.append("  Tried:");
+    for (int i = 0, size = mCallAdapterFactories.size(); i < size; ++i) {
+      stringBuilder.append("\n   * ").append(mCallAdapterFactories.get(i).getClass().getName());
+    }
+    throw new IllegalArgumentException(stringBuilder.toString());
+  }
+
 }
