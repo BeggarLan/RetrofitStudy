@@ -4,15 +4,16 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * author: BeggarLan
  * created on: 2022/4/22 22:27
  * description: 将接口的method转化为实际请求的method
  */
-public class ServiceMethod {
+abstract class ServiceMethod<ReturnT> {
 
-  static ServiceMethod parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method method) {
+  static <T> ServiceMethod<T> parseAnnotations(@NonNull LRetrofit retrofit, @NonNull Method method) {
     RequestFactory requestFactory = RequestFactory.parseAnnotations(retrofit, method);
     // 返回类型
     Type returnType = method.getGenericReturnType();
@@ -26,7 +27,10 @@ public class ServiceMethod {
           "class:" + method.getDeclaringClass().getName() + ", method:" + method +
               " cannot return void");
     }
-    return
+    return HttpServiceMethod.parseAnnotations(retrofit, method, requestFactory);
   }
+
+  @Nullable
+  abstract ReturnT invoke(Object[] objects);
 
 }
