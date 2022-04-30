@@ -13,6 +13,12 @@ import androidx.annotation.Nullable;
  */
 public interface CallAdapter<T, R> {
 
+  /**
+   * 请求返回的类型，
+   * e.g. the responseType for Call<Repo> is Repo
+   */
+  Type responseType();
+
   abstract class Factory {
 
     /**

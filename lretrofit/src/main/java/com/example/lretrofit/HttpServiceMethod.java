@@ -22,6 +22,8 @@ abstract class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<Retur
     Annotation[] annotations = method.getAnnotations();
     CallAdapter<ResponseT, ReturnT> callAdapter =
         createCallAdapter(retrofit, method, returnType, annotations);
+    Type responseType = callAdapter.responseType();
+
 
 
   }
@@ -31,7 +33,12 @@ abstract class HttpServiceMethod<ResponseT, ReturnT> extends ServiceMethod<Retur
       @NonNull Method method,
       @NonNull Type returnType,
       @Nullable Annotation[] annotations) {
-    return (CallAdapter<ResponseT, ReturnT>) retrofit.callAdapter(returnType, annotations);
+    try {
+      return (CallAdapter<ResponseT, ReturnT>) retrofit.callAdapter(returnType, annotations);
+    } catch (Throwable e) {
+      throw new IllegalArgumentException(
+          String.format("Unable to create call adapter for %s", returnType));
+    }
   }
 
 
