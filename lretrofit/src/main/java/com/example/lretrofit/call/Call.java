@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 
 import com.example.lretrofit.Response;
 
+import okhttp3.Request;
+
 /**
  * author: lanweihua
  * created on: 2022/4/30 2:49 下午
@@ -40,5 +42,9 @@ public interface Call<T> {
    * @return {@code }
    */
   boolean isCanceled();
+
+  Request getRequest();
+
+
 
 }

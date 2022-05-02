@@ -31,6 +31,6 @@ abstract class ServiceMethod<ReturnT> {
   }
 
   @Nullable
-  abstract ReturnT invoke(Object[] objects);
+  abstract ReturnT invoke(@Nullable Object[] args);
 
 }

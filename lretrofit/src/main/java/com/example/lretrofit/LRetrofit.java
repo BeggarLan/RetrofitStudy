@@ -15,6 +15,7 @@ import java.util.Objects;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import okhttp3.Call;
 import okhttp3.HttpUrl;
 import okhttp3.ResponseBody;
 
@@ -28,6 +29,9 @@ public class LRetrofit {
     @NonNull
     private final Map<Method, ServiceMethod<?>> mServiceMethodMap = new HashMap<>();
 
+    // ohHttp发起请求工工厂
+    @NonNull
+    final Call.Factory mCallFactory;
     @NonNull
     final HttpUrl mBaseUrl;
 
@@ -36,8 +40,11 @@ public class LRetrofit {
     @NonNull
     final List<CallAdapter.Factory> mCallAdapterFactories;
 
-    public LRetrofit(@NonNull HttpUrl mBaseUrl) {
-        this.mBaseUrl = mBaseUrl;
+    public LRetrofit(
+            @NonNull Call.Factory callFactory,
+            @NonNull HttpUrl baseUrl) {
+        mCallFactory = callFactory;
+        mBaseUrl = baseUrl;
     }
 
     /**
@@ -102,6 +109,7 @@ public class LRetrofit {
     /**
      * 根据返回类型找到合适的adapter
      */
+    @NonNull
     public CallAdapter<?, ?> callAdapter(
             @NonNull Type returnType, @Nullable Annotation[] annotations) {
         Objects.requireNonNull(returnType, "returnType == null");
@@ -131,6 +139,7 @@ public class LRetrofit {
      * @param <ResponseT>  如Call<Resp>
      * @return
      */
+    @NonNull
     public <ResponseT> Converter<ResponseBody, ResponseT> responseBodyConverter(Type responseType, Annotation[] annotations) {
         Objects.requireNonNull(responseType, "responseType == null");
         Objects.requireNonNull(annotations, "annotations == null");

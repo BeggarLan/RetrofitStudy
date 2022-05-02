@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import okhttp3.HttpUrl;
+import okhttp3.Request;
 
 /**
  * author: BeggarLan
@@ -53,6 +54,11 @@ public class RequestFactory {
         mRelativeUrl = builder.mRelativeUrl;
         mHasBody = builder.mHasBody;
         isFormEncode = builder.isFormEncode;
+    }
+
+    public okhttp3.Request create(@NonNull Object[] mArgs) {
+        int argumentCount = mArgs.length;
+
     }
 
 
