@@ -112,12 +112,6 @@ public class Utils {
     return resultType;
   }
 
-  static void checkNotNull(@Nullable Object object, String msg) {
-    if (object == null) {
-      throw new NullPointerException(msg);
-    }
-  }
-
   /**
    * 几本类型装箱
    */

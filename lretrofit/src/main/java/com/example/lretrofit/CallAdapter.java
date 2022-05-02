@@ -6,6 +6,8 @@ import java.lang.reflect.Type;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.lretrofit.call.Call;
+
 /**
  * author: lanweihua
  * created on: 2022/4/29 12:54 下午
@@ -18,6 +20,12 @@ public interface CallAdapter<T, R> {
    * e.g. the responseType for Call<Repo> is Repo
    */
   Type responseType();
+
+  /**
+   * 请求默认是返回Call。
+   * 通过该方法可以适配自己的返回类型
+   */
+  R adapt(Call<T> call);
 
   abstract class Factory {
 
