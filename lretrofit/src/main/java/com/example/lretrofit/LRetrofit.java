@@ -1,7 +1,5 @@
 package com.example.lretrofit;
 
-import static com.example.lretrofit.Utils.checkNotNull;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -26,136 +24,179 @@ import okhttp3.ResponseBody;
  */
 public class LRetrofit {
 
-    @NonNull
-    private final Map<Method, ServiceMethod<?>> mServiceMethodMap = new HashMap<>();
+  @NonNull
+  private final Map<Method, ServiceMethod<?>> mServiceMethodMap = new HashMap<>();
+
+  // ohHttp发起请求工工厂
+  @NonNull final Call.Factory mCallFactory;
+  @NonNull final HttpUrl mBaseUrl;
+
+  @NonNull final List<Converter.Factory> mConverterFactories;
+  @NonNull final List<CallAdapter.Factory> mCallAdapterFactories;
+
+  public LRetrofit(
+      @NonNull Call.Factory callFactory,
+      @NonNull HttpUrl baseUrl,
+      @NonNull List<Converter.Factory> converterFactories,
+      @NonNull List<CallAdapter.Factory> callAdapterFactories) {
+    mCallFactory = callFactory;
+    mBaseUrl = baseUrl;
+    mConverterFactories = converterFactories;
+    mCallAdapterFactories = callAdapterFactories;
+  }
+
+  /**
+   * 创建service的代理对象
+   */
+  public <T> T create(@NonNull Class<T> service) {
+    validService(service);
+    return (T) Proxy.newProxyInstance(
+        service.getClassLoader(),
+        new Class<?>[]{service},
+        new InvocationHandler() {
+          @Override
+          public Object invoke(Object o, Method method, Object[] args) throws Throwable {
+            if (method.getDeclaringClass() == Object.class) {
+              return method.invoke(this, args);
+            }
+            return loadServiceMethod(method).invoke(args);
+          }
+        });
+  }
+
+  /**
+   * service合法性检查
+   */
+  private void validService(@NonNull Class<?> service) {
+    if (!service.isInterface()) {
+      throw new IllegalArgumentException("server must be interface");
+    }
+  }
+
+  private ServiceMethod<?> loadServiceMethod(@NonNull Method method) {
+    ServiceMethod<?> result = mServiceMethodMap.get(method);
+    if (result != null) {
+      return result;
+    }
+    synchronized (mServiceMethodMap) {
+      // 在检查一遍
+      result = mServiceMethodMap.get(method);
+      if (result == null) {
+        result = ServiceMethod.parseAnnotations(this, method);
+        mServiceMethodMap.put(method, result);
+      }
+    }
+    return result;
+  }
+
+  public Converter<?, String> stringConverter(
+      @Nullable Type type, @Nullable Annotation[] annotations) {
+    Objects.requireNonNull(type, "type == null");
+    Objects.requireNonNull(annotations, "annotations == null");
+
+    for (Converter.Factory factory : mConverterFactories) {
+      Converter<?, String> stringConverter = factory.stringConverter(type, annotations, this);
+      if (stringConverter != null) {
+        return stringConverter;
+      }
+    }
+    // TODO: 2022/4/27 default
+    return null;
+  }
+
+  /**
+   * 根据返回类型找到合适的adapter
+   */
+  @NonNull
+  public CallAdapter<?, ?> callAdapter(
+      @NonNull Type returnType, @Nullable Annotation[] annotations) {
+    Objects.requireNonNull(returnType, "returnType == null");
+    Objects.requireNonNull(annotations, "annotations == null");
+    for (int i = 0, size = mCallAdapterFactories.size(); i < size; ++i) {
+      CallAdapter<?, ?> callAdapter =
+          mCallAdapterFactories.get(i).get(this, returnType, annotations);
+      if (callAdapter != null) {
+        return callAdapter;
+      }
+    }
+
+    StringBuilder stringBuilder = new StringBuilder("could not find callAdapter for ")
+        .append(returnType)
+        .append(".\n");
+    stringBuilder.append("  Tried:");
+    for (int i = 0, size = mCallAdapterFactories.size(); i < size; ++i) {
+      stringBuilder.append("\n   * ").append(mCallAdapterFactories.get(i).getClass().getName());
+    }
+    throw new IllegalArgumentException(stringBuilder.toString());
+  }
+
+  /**
+   * 请求回执的结果转换器
+   *
+   * @param responseType 如Resp
+   * @param <ResponseT>  如Call<Resp>
+   * @return
+   */
+  @NonNull
+  public <ResponseT> Converter<ResponseBody, ResponseT> responseBodyConverter(Type responseType,
+      Annotation[] annotations) {
+    Objects.requireNonNull(responseType, "responseType == null");
+    Objects.requireNonNull(annotations, "annotations == null");
+    for (Converter.Factory factory : mConverterFactories) {
+      Converter<ResponseBody, ?> converter =
+          factory.responseBodyConverter(responseType, annotations, this);
+      if (converter != null) {
+        return (Converter<ResponseBody, ResponseT>) converter;
+      }
+    }
+    StringBuilder stringBuilder = new StringBuilder("could not find ResponseBody converter for ")
+        .append(responseType)
+        .append(".\n");
+    stringBuilder.append("  Tried:");
+    for (int i = 0, size = mConverterFactories.size(); i < size; ++i) {
+      stringBuilder.append("\n   * ").append(mConverterFactories.get(i).getClass().getName());
+    }
+    throw new IllegalArgumentException(stringBuilder.toString());
+  }
+
+  public static final class Builder {
 
     // ohHttp发起请求工工厂
-    @NonNull
-    final Call.Factory mCallFactory;
-    @NonNull
-    final HttpUrl mBaseUrl;
+    private Call.Factory mCallFactory;
+    private HttpUrl mBaseUrl;
+    private List<Converter.Factory> mConverterFactories;
+    private List<CallAdapter.Factory> mCallAdapterFactories;
 
-    @NonNull
-    final List<Converter.Factory> mConverterFactories;
-    @NonNull
-    final List<CallAdapter.Factory> mCallAdapterFactories;
-
-    public LRetrofit(
-            @NonNull Call.Factory callFactory,
-            @NonNull HttpUrl baseUrl) {
-        mCallFactory = callFactory;
-        mBaseUrl = baseUrl;
+    public Builder setCallFactory(Call.Factory callFactory) {
+      mCallFactory = callFactory;
+      return this;
     }
 
-    /**
-     * 创建service的代理对象
-     */
-    public <T> T create(@NonNull Class<T> service) {
-        validService(service);
-        return (T) Proxy.newProxyInstance(
-                service.getClassLoader(),
-                new Class<?>[]{service},
-                new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object o, Method method, Object[] args) throws Throwable {
-                        if (method.getDeclaringClass() == Object.class) {
-                            return method.invoke(this, args);
-                        }
-                        return loadServiceMethod(method).invoke(args);
-                    }
-                });
+    public Builder setBaseUrl(String baseUrl) {
+      return setBaseUrl(HttpUrl.get(baseUrl));
     }
 
-    /**
-     * service合法性检查
-     */
-    private void validService(@NonNull Class<?> service) {
-        if (!service.isInterface()) {
-            throw new IllegalArgumentException("server must be interface");
-        }
+    public Builder setBaseUrl(HttpUrl baseUrl) {
+      mBaseUrl = baseUrl;
+      return this;
     }
 
-    private ServiceMethod<?> loadServiceMethod(@NonNull Method method) {
-        ServiceMethod<?> result = mServiceMethodMap.get(method);
-        if (result != null) {
-            return result;
-        }
-        synchronized (mServiceMethodMap) {
-            // 在检查一遍
-            result = mServiceMethodMap.get(method);
-            if (result == null) {
-                result = ServiceMethod.parseAnnotations(this, method);
-                mServiceMethodMap.put(method, result);
-            }
-        }
-        return result;
+    public Builder setConverterFactories(
+        List<Converter.Factory> converterFactories) {
+      mConverterFactories = converterFactories;
+      return this;
     }
 
-    public Converter<?, String> stringConverter(
-            @Nullable Type type, @Nullable Annotation[] annotations) {
-        Objects.requireNonNull(type, "type == null");
-        Objects.requireNonNull(annotations, "annotations == null");
-
-        for (Converter.Factory factory : mConverterFactories) {
-            Converter<?, String> stringConverter = factory.stringConverter(type, annotations, this);
-            if (stringConverter != null) {
-                return stringConverter;
-            }
-        }
-        // TODO: 2022/4/27 default
-        return null;
+    public Builder setCallAdapterFactories(
+        List<CallAdapter.Factory> callAdapterFactories) {
+      mCallAdapterFactories = callAdapterFactories;
+      return this;
     }
 
-    /**
-     * 根据返回类型找到合适的adapter
-     */
-    @NonNull
-    public CallAdapter<?, ?> callAdapter(
-            @NonNull Type returnType, @Nullable Annotation[] annotations) {
-        Objects.requireNonNull(returnType, "returnType == null");
-        Objects.requireNonNull(annotations, "annotations == null");
-        for (int i = 0, size = mCallAdapterFactories.size(); i < size; ++i) {
-            CallAdapter<?, ?> callAdapter =
-                    mCallAdapterFactories.get(i).get(this, returnType, annotations);
-            if (callAdapter != null) {
-                return callAdapter;
-            }
-        }
-
-        StringBuilder stringBuilder = new StringBuilder("could not find callAdapter for ")
-                .append(returnType)
-                .append(".\n");
-        stringBuilder.append("  Tried:");
-        for (int i = 0, size = mCallAdapterFactories.size(); i < size; ++i) {
-            stringBuilder.append("\n   * ").append(mCallAdapterFactories.get(i).getClass().getName());
-        }
-        throw new IllegalArgumentException(stringBuilder.toString());
+    public LRetrofit build() {
+      return new LRetrofit(mCallFactory, mBaseUrl, mConverterFactories, mCallAdapterFactories);
     }
 
-    /**
-     * 请求回执的结果转换器
-     *
-     * @param responseType 如Resp
-     * @param <ResponseT>  如Call<Resp>
-     * @return
-     */
-    @NonNull
-    public <ResponseT> Converter<ResponseBody, ResponseT> responseBodyConverter(Type responseType, Annotation[] annotations) {
-        Objects.requireNonNull(responseType, "responseType == null");
-        Objects.requireNonNull(annotations, "annotations == null");
-        for (Converter.Factory factory : mConverterFactories) {
-            Converter<ResponseBody, ?> converter = factory.responseBodyConverter(responseType, annotations, this);
-            if (converter != null) {
-                return (Converter<ResponseBody, ResponseT>) converter;
-            }
-        }
-        StringBuilder stringBuilder = new StringBuilder("could not find ResponseBody converter for ")
-                .append(responseType)
-                .append(".\n");
-        stringBuilder.append("  Tried:");
-        for (int i = 0, size = mConverterFactories.size(); i < size; ++i) {
-            stringBuilder.append("\n   * ").append(mConverterFactories.get(i).getClass().getName());
-        }
-        throw new IllegalArgumentException(stringBuilder.toString());
-    }
+  }
+
 }
