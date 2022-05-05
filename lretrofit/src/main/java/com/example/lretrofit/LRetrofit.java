@@ -37,13 +37,13 @@ public class LRetrofit {
   public LRetrofit(
       @NonNull Call.Factory callFactory,
       @NonNull HttpUrl baseUrl,
-      @NonNull List<Converter.Factory> converterFactories,
-      @NonNull List<CallAdapter.Factory> callAdapterFactories) {
-    mCallFactory = callFactory;
-    mBaseUrl = baseUrl;
-    mConverterFactories = converterFactories;
-    mCallAdapterFactories = callAdapterFactories;
-  }
+            @NonNull List<Converter.Factory> converterFactories,
+            @NonNull List<CallAdapter.Factory> callAdapterFactories) {
+        mCallFactory = callFactory;
+        mBaseUrl = baseUrl;
+        mConverterFactories = converterFactories;
+        mCallAdapterFactories = callAdapterFactories;
+    }
 
   /**
    * 创建service的代理对象
